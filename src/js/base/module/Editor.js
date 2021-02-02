@@ -902,6 +902,37 @@ export default class Editor {
     return linkInfo;
   }
 
+  /**
+   * returns link info for image links
+   *
+   * @return {Object}
+   * @return {WrappedRange} return.range
+   * @return {String} return.text
+   * @return {Boolean} [return.isNewWindow=true]
+   * @return {String} [return.url=""]
+   * @return {Boolean} [return.imageLink=true]
+   */
+  getImageLinkInfo() {
+    const rng = this.getLastRange().expand(dom.isAnchor);
+    const $target = $(this.restoreTarget());
+    // Get the first anchor on range(for edit).
+    const $anchor = $target.closest('a');
+    const linkInfo = {
+      range: rng,
+      text: 'N/A', //TODO translations?
+      url: $anchor.length ? $anchor.attr('href') : '',
+      imageLink: true,
+    };
+
+    // When anchor exists,
+    if ($anchor.length) {
+      // Set isNewWindow by checking its target.
+      linkInfo.isNewWindow = $anchor.attr('target') === '_blank';
+    }
+
+    return linkInfo;
+  }
+
   addRow(position) {
     const rng = this.getLastRange(this.$editable);
     if (rng.isCollapsed() && rng.isOnCell()) {

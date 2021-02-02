@@ -710,7 +710,7 @@ export default class Buttons {
       return this.button({
         contents: this.ui.icon(this.options.icons.link),
         tooltip: this.lang.image.url,
-        click: this.context.createInvokeHandler('linkDialog.show'),
+        click: this.context.createInvokeHandler('linkDialog.showImageLink'),
       }).render();
     });
 

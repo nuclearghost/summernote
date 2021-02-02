@@ -98,6 +98,12 @@ export default class LinkDialog {
           linkInfo.url = linkInfo.text;
         }
 
+        if (linkInfo.imageLink) {
+          $linkText.prop('disabled', true);
+        } else {
+          $linkText.prop('disabled', false);
+        }
+
         $linkText.on('input paste propertychange', () => {
           // If linktext was modified by input events,
           // cloning text from linkUrl will be stopped.
@@ -170,6 +176,19 @@ export default class LinkDialog {
     this.context.invoke('editor.saveRange');
     this.showLinkDialog(linkInfo).then((linkInfo) => {
       this.context.invoke('editor.restoreRange');
+      this.context.invoke('editor.createLink', linkInfo);
+    }).fail(() => {
+      this.context.invoke('editor.restoreRange');
+    });
+  }
+
+  showImageLink() {
+    const linkInfo = this.context.invoke('editor.getImageLinkInfo');
+
+    this.context.invoke('editor.saveRange');
+    this.showLinkDialog(linkInfo).then((linkInfo) => {
+      this.context.invoke('editor.restoreRange');
+      linkInfo.text = '';
       this.context.invoke('editor.createLink', linkInfo);
     }).fail(() => {
       this.context.invoke('editor.restoreRange');
