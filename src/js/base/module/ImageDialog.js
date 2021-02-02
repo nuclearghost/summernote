@@ -22,7 +22,7 @@ export default class ImageDialog {
     }
 
     const $container = this.options.dialogsInBody ? this.$body : this.options.container;
-    const body = [
+    let body = [
       '<div class="form-group note-form-group note-group-select-from-files">',
         '<label for="note-dialog-image-file-' + this.options.id + '" class="note-form-label">' + this.lang.image.selectFromFiles + '</label>',
         '<input id="note-dialog-image-file-' + this.options.id + '" class="note-image-input form-control-file note-form-control note-input" ',
@@ -34,6 +34,12 @@ export default class ImageDialog {
         '<input id="note-dialog-image-url-' + this.options.id + '" class="note-image-url form-control note-form-control note-input" type="text"/>',
       '</div>',
     ].join('');
+    if (this.options.imageCanBeLinked) {
+      body += ['<div class="form-group note-form-group">',
+        `<label for="note-dialog-link-url-${this.options.id}" class="note-form-label">${this.lang.link.url}</label>`,
+        `<input id="note-dialog-link-url-${this.options.id}" class="note-link-url form-control note-form-control note-input" type="text" value="http://"/>`,
+      '</div>'].join('');
+    }
     const buttonClass = 'btn btn-primary note-btn note-btn-primary note-image-btn';
     const footer = `<input type="button" href="#" class="${buttonClass}" value="${this.lang.image.insert}" disabled>`;
 
@@ -61,7 +67,7 @@ export default class ImageDialog {
 
   show() {
     this.context.invoke('editor.saveRange');
-    this.showImageDialog().then((data) => {
+    this.showImageDialog().then((data, linkUrl) => {
       // [workaround] hide dialog before restore range for IE range focus
       this.ui.hideDialog(this.$dialog);
       this.context.invoke('editor.restoreRange');
@@ -69,12 +75,12 @@ export default class ImageDialog {
       if (typeof data === 'string') { // image url
         // If onImageLinkInsert set,
         if (this.options.callbacks.onImageLinkInsert) {
-          this.context.triggerEvent('image.link.insert', data);
+          this.context.triggerEvent('image.link.insert', data, linkUrl);
         } else {
-          this.context.invoke('editor.insertImage', data);
+          this.context.invoke('editor.insertImage', data, undefined, linkUrl);
         }
       } else { // array of files
-        this.context.invoke('editor.insertImagesOrCallback', data);
+        this.context.invoke('editor.insertImagesOrCallback', data, linkUrl);
       }
     }).fail(() => {
       this.context.invoke('editor.restoreRange');
@@ -92,18 +98,21 @@ export default class ImageDialog {
       const $imageInput = this.$dialog.find('.note-image-input');
       const $imageUrl = this.$dialog.find('.note-image-url');
       const $imageBtn = this.$dialog.find('.note-image-btn');
+      const $linkUrl = this.$dialog.find('.note-link-url');
 
       this.ui.onDialogShown(this.$dialog, () => {
         this.context.triggerEvent('dialog.shown');
 
         // Cloning imageInput to clear element.
         $imageInput.replaceWith($imageInput.clone().on('change', (event) => {
-          deferred.resolve(event.target.files || event.target.value);
+          deferred.resolve(event.target.files || event.target.value, $linkUrl.val());
         }).val(''));
 
         $imageUrl.on('input paste propertychange', () => {
           this.ui.toggleBtn($imageBtn, $imageUrl.val());
         }).val('');
+
+        $linkUrl.val('');
 
         if (!env.isSupportTouch) {
           $imageUrl.trigger('focus');
@@ -111,10 +120,11 @@ export default class ImageDialog {
 
         $imageBtn.click((event) => {
           event.preventDefault();
-          deferred.resolve($imageUrl.val());
+          deferred.resolve($imageUrl.val(), $linkUrl.val());
         });
 
         this.bindEnterKey($imageUrl, $imageBtn);
+        this.bindEnterKey($linkUrl, $imageBtn);
       });
 
       this.ui.onDialogHidden(this.$dialog, () => {

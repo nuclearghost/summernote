@@ -205,6 +205,7 @@ $.summernote = $.extend($.summernote, {
 
     maximumImageFileSize: null,
     acceptImageFileTypes: "image/*",
+    imageCanBeLinked: false,
 
     callbacks: {
       onBeforeCommand: null,

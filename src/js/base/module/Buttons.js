@@ -705,6 +705,15 @@ export default class Buttons {
       }).render();
     });
 
+    // Link Button
+    this.context.memo('button.linkMedia', () => {
+      return this.button({
+        contents: this.ui.icon(this.options.icons.link),
+        tooltip: this.lang.image.url,
+        click: this.context.createInvokeHandler('linkDialog.show'),
+      }).render();
+    });
+
     // Remove Buttons
     this.context.memo('button.removeMedia', () => {
       return this.button({

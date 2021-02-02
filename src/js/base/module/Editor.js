@@ -716,11 +716,13 @@ export default class Editor {
    *
    * @param {String} src
    * @param {String|Function} param
+   * @param {String} linkUrl
    * @return {Promise}
    */
-  insertImage(src, param) {
+  insertImage(src, param, linkUrl) {
     return createImage(src, param).then(($image) => {
       this.beforeCommand();
+      console.log(arguments);
 
       if (typeof param === 'function') {
         param($image);
@@ -732,6 +734,10 @@ export default class Editor {
       }
 
       $image.show();
+      if (typeof linkUrl === 'string' && linkUrl !== '') {
+        $image = $image.wrap(`<figure><a href='${linkUrl}' class='image-link-url'></a></figure>`).closest('figure');
+      }
+
       this.getLastRange().insertNode($image[0]);
       this.setLastRange(range.createFromNodeAfter($image[0]).select());
       this.afterCommand();
@@ -743,15 +749,16 @@ export default class Editor {
   /**
    * insertImages
    * @param {File[]} files
+   * @param {String} linkUrl
    */
-  insertImagesAsDataURL(files) {
+  insertImagesAsDataURL(files, linkUrl) {
     $.each(files, (idx, file) => {
       const filename = file.name;
       if (this.options.maximumImageFileSize && this.options.maximumImageFileSize < file.size) {
         this.context.triggerEvent('image.upload.error', this.lang.image.maximumFileSizeError);
       } else {
         readFileAsDataURL(file).then((dataURL) => {
-          return this.insertImage(dataURL, filename);
+          return this.insertImage(dataURL, filename, linkUrl);
         }).fail(() => {
           this.context.triggerEvent('image.upload.error');
         });
@@ -762,15 +769,16 @@ export default class Editor {
   /**
    * insertImagesOrCallback
    * @param {File[]} files
+   * @param {string} linkUrl
    */
-  insertImagesOrCallback(files) {
+  insertImagesOrCallback(files, linkUrl) {
     const callbacks = this.options.callbacks;
     // If onImageUpload set,
     if (callbacks.onImageUpload) {
-      this.context.triggerEvent('image.upload', files);
+      this.context.triggerEvent('image.upload', files, linkUrl);
       // else insert Image as dataURL
     } else {
-      this.insertImagesAsDataURL(files);
+      this.insertImagesAsDataURL(files, linkUrl);
     }
   }
 
